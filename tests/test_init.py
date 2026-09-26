@@ -313,6 +313,30 @@ async def test_battery_charging_absorbs_surplus(
     assert hass.states.get("sensor.test_plant_grid_direction").state == "idle"
 
 
+async def test_islanded_inverter_never_reports_grid_flow(
+    hass: HomeAssistant, mock_client, stats_payload
+) -> None:
+    """With the mains absent the balance residual must not read as export.
+
+    Grid state 0 means the inverter is islanded: solar and a draining battery
+    are carrying the house with nothing connected to cross. The balance here
+    would otherwise leave a large positive surplus and call it export, which is
+    the phantom the grid_state gate removes.
+    """
+    stats_payload["stats"]["grid_state"] = "0"
+    set_solar(stats_payload, 2000)
+    set_load(stats_payload, 400)
+    stats_payload["stats"]["charging_current"] = "0.0"
+    stats_payload["stats"]["discharge"] = "15.0"  # battery draining
+
+    await setup_entry(hass)
+
+    assert hass.states.get("sensor.test_plant_grid_direction").state == "idle"
+    assert float(hass.states.get("sensor.test_plant_grid_power").state) == 0.0
+    assert hass.states.get("binary_sensor.test_plant_exporting_to_grid").state == "off"
+    assert hass.states.get("binary_sensor.test_plant_grid_available").state == "off"
+
+
 async def test_grid_power_comes_from_the_balance_not_the_ct(
     hass: HomeAssistant, mock_client, stats_payload
 ) -> None:

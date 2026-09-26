@@ -166,7 +166,17 @@ def _grid_power_watts(data: SyncXData, efficiency: float = 1.0) -> float | None:
 
     The CT is still published as a raw current and voltage for anyone who
     wants it.
+
+    When the mains is absent the inverter is islanded and there is no grid port
+    to cross, so the balance is forced to zero rather than being trusted. Off
+    grid the residual of solar, load and battery is pure estimation error -- the
+    assumed power factor, the conversion efficiency, sensor noise -- and left
+    alone it reads as a phantom export even though nothing is connected.
     """
+    grid_state = data.stat("grid_state")
+    if grid_state is not None and str(grid_state) == "0":
+        return 0.0
+
     solar = to_float(data.stat("solar_power"))
     if solar is None or data.load_power is None:
         return None
