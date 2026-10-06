@@ -141,7 +141,7 @@ SENSORS: tuple[SyncXSensorDescription, ...] = (
         device_class=SensorDeviceClass.VOLTAGE,
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         state_class=SensorStateClass.MEASUREMENT,
-        value_fn=lambda d: to_float(d.top("solarVoltage")),
+        value_fn=lambda d: to_float(d.top("solarVoltage") or d.stat("pvVoltage1")),
     ),
     SyncXSensorDescription(
         key="solar_current",
@@ -149,7 +149,7 @@ SENSORS: tuple[SyncXSensorDescription, ...] = (
         device_class=SensorDeviceClass.CURRENT,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         state_class=SensorStateClass.MEASUREMENT,
-        value_fn=lambda d: to_float(d.stat("pvCurrent")),
+        value_fn=lambda d: to_float(d.stat("pvCurrent") or d.stat("pvCurrent1")),
     ),
     SyncXSensorDescription(
         key="generation_today",
